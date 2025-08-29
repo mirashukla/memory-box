@@ -5,22 +5,7 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-/.idea/*
-!.idea/.name
-!.idea/codeInsightSettings.xml
-!.idea/codeStyles/
-!.idea/copyright/
-!.idea/dataSources.xml
-!.idea/detekt.xml
-!.idea/encodings.xml
-!.idea/externalDependencies.xml
-!.idea/file.template.settings.xml
-!.idea/fileTemplates/
-!.idea/icon.svg
-!.idea/inspectionProfiles/
-!.idea/runConfigurations/
-!.idea/scopes/
-!.idea/vcs.xml
+.idea/*
 
 ### Kotlin ###
 .kotlin
