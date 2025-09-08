@@ -39,7 +39,7 @@ resource "aws_lambda_function" "memory_box" {
   function_name = "memory-box"
   s3_bucket     = aws_s3_bucket.lambda_bucket.id
   s3_key        = aws_s3_object.lambda_jar.key
-  handler       = "com.memorybox.MemoryHandler"
+  handler       = "org.mira.lambda.MemoryHandler"
   runtime       = "java21"
   role          = aws_iam_role.lambda_exec.arn
 }
