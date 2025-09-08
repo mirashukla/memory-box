@@ -8,19 +8,26 @@ repositories {
     mavenCentral()
 }
 
-val awsVersion = "1.3.0"
+val awsLambdaCoreVersion = "1.3.0"
+val awsLambdaEventsVersion = "3.16.1"
 
 dependencies {
-    implementation("com.amazonaws:aws-lambda-java-core:$awsVersion")
+    implementation("com.amazonaws:aws-lambda-java-events:$awsLambdaEventsVersion")
+
+    implementation("com.amazonaws:aws-lambda-java-core:$awsLambdaCoreVersion")
     testImplementation(kotlin("test"))
 }
 
 
 tasks {
     named<ShadowJar>("shadowJar") {
-        archiveBaseName = "lambda"
+        archiveBaseName = "memory-box"
         archiveClassifier = ""
         archiveVersion = ""
+    }
+
+    named<Jar>("jar") {
+        enabled = false
     }
 
     test {
