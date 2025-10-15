@@ -18,7 +18,7 @@ resource "aws_iam_role" "lambda_exec" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action    = "sts:AssumeRole"
+        Action = "sts:AssumeRole"
         Principal = {
           Service = "lambda.amazonaws.com"
         }
@@ -36,13 +36,14 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 
 # Lambda function
 resource "aws_lambda_function" "memory_box" {
-  function_name = "memory-box"
-  s3_bucket     = aws_s3_bucket.lambda_bucket.id
-  s3_key        = aws_s3_object.lambda_jar.key
-  handler       = "org.mira.lambda.MemoryHandler"
-  runtime       = "java21"
-  role          = aws_iam_role.lambda_exec.arn
+  function_name    = "memory-box"
+  s3_bucket        = aws_s3_bucket.lambda_bucket.id
+  s3_key           = aws_s3_object.lambda_jar.key
+  handler          = "org.mira.lambda.MemoryHandler"
+  runtime          = "java21"
+  role             = aws_iam_role.lambda_exec.arn
   source_code_hash = filebase64sha256("${path.module}/../build/libs/memory-box.jar")
+  timeout          = 30
 }
 
 # API Gateway (HTTP API)

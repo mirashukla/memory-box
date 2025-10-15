@@ -5,11 +5,9 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import java.time.Instant
-import javax.inject.Inject
-import javax.inject.Singleton
+import java.util.Base64
 
-@Singleton
-class MemoryBoxTable @Inject constructor(private val dynamoDbClient: DynamoDbClient) {
+class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
     private companion object {
         const val MEMORY_BOX_TABLE_NAME = "MemoryBoxTable"
         const val USERNAME_ATTRIBUTE = "username"
@@ -29,18 +27,38 @@ class MemoryBoxTable @Inject constructor(private val dynamoDbClient: DynamoDbCli
         dynamoDbClient.putItem(request)
     }
 
-    fun getLatestMemories(page: Int = 0): List<Memory> {
+    data class MemoriesResponse(val memories: List<Memory>, val nextPageToken: String)
 
+    fun getLatestMemories(pageSize: Int = 10, pageToken: String): MemoriesResponse {
         val queryRequest = QueryRequest.builder()
             .tableName(MEMORY_BOX_TABLE_NAME)
             .scanIndexForward(false)
-            .limit(10)
-            .build()
+            .limit(pageSize + 1)
 
-        val response = dynamoDbClient.query(queryRequest)
+        if (pageToken.isNotBlank()) {
+            val decodedPageToken = decodeToken(pageToken)
+            val expressionValues = mutableMapOf<String, AttributeValue>(
+                ":createdAt" to AttributeValue.fromS(decodedPageToken)
+            )
+            queryRequest
+                .keyConditionExpression("createdAt <= :start")
+                .expressionAttributeValues(expressionValues)
+        }
+
+        val response = dynamoDbClient.query(queryRequest.build())
         val latestMemories = response.items()
+        val convertedMemories = latestMemories.map { convertMemoryEntry(it) }
+        val nextPageToken =
+            if (convertedMemories.size <= pageSize || convertedMemories.isEmpty()) "" else convertedMemories.last().createdAt
 
-        return latestMemories.map { convertMemoryEntry(it) }
+        return MemoriesResponse(convertedMemories, encodeToken(nextPageToken))
+    }
+
+    private fun decodeToken(pageToken: String): String =
+        String(Base64.getUrlDecoder().decode(pageToken))
+
+    private fun encodeToken(nextPageToken: String): String {
+        return Base64.getUrlEncoder().encode(nextPageToken.toByteArray()).toString()
     }
 
     private fun convertMemoryEntry(memoryEntry: Map<String, AttributeValue>): Memory =
