@@ -40,23 +40,34 @@ class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HT
         request: APIGatewayProxyRequestEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
-        return when (request.httpMethod.uppercase()) {
-            "POST" -> {
-                val body = request.body ?: return response(400, """{"error":"Missing body"}""")
-                val memoryRequest = Json.decodeFromString<CreateMemoryRequest>(body)
-                context.logger.log("Saving memory for user: ${memoryRequest.username}")
-                memoryBoxTable.saveMemory(memoryRequest)
-                response(200, """{"message":"Memory added!"}""")
-            }
+        val action = Memories.fromMethod(request.httpMethod)
 
-            "GET" -> {
-                val pageToken = request.queryStringParameters?.get("pageToken")
-                val result = memoryBoxTable.getLatestMemories(pageSize = 10, pageToken = pageToken)
-                response(200, Json.encodeToString(result))
-            }
-
-            else -> response(405, """{"error":"Method not allowed"}""")
+        return when (action) {
+            is Memories.Post -> handlePostMemory(request, context)
+            is Memories.Get -> handleGetMemoriesPaginated(request, context)
+            is Memories.Unknown -> response(405, """{"error":"Method not allowed"}""")
         }
+    }
+
+    private fun handlePostMemory(
+        request: APIGatewayProxyRequestEvent,
+        context: Context
+    ): APIGatewayV2HTTPResponse {
+        val body = request.body ?: return response(400, """{"error":"Missing body"}""")
+        val memoryRequest = Json.decodeFromString<CreateMemoryRequest>(body)
+        context.logger.log("Saving memory for user: ${memoryRequest.username}")
+        memoryBoxTable.saveMemory(memoryRequest)
+        return response(200, """{"message":"Memory added!"}""")
+    }
+
+    private fun handleGetMemoriesPaginated(
+        request: APIGatewayProxyRequestEvent,
+        context: Context
+    ): APIGatewayV2HTTPResponse {
+        val pageToken = request.queryStringParameters?.get("pageToken")
+        val result = memoryBoxTable.getLatestMemories(pageSize = 10, pageToken = pageToken)
+        context.logger.log("Retrieving memory for user:")
+        return response(200, Json.encodeToString(result))
     }
 
     private fun response(status: Int, body: String): APIGatewayV2HTTPResponse =
