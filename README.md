@@ -1,6 +1,6 @@
 # Memory App
 
-## Memory Flow
+## Memory Components
 
 ```mermaid
 graph TD
@@ -8,11 +8,13 @@ Client[Client Application] -->|HTTP Request| APIGateway[API Gateway]
 APIGateway -->|Calls| MemoryHandler[Memory Handler]
 MemoryHandler -->|Reads/Writes| DynamoDB[DynamoDB]
 
-    style Client fill:#f9f,stroke:#333,stroke-width:1px
-    style APIGateway fill:#bbf,stroke:#333,stroke-width:1px
-    style MemoryHandler fill:#bfb,stroke:#333,stroke-width:1px
-    style DynamoDB fill:#ffb,stroke:#333,stroke-width:1px
+    style Client fill:#a0c4ff,stroke:#000,stroke-width:1px,color:#000
+    style APIGateway fill:#bdb2ff,stroke:#000,stroke-width:1px,color:#000
+    style MemoryHandler fill:#caffbf,stroke:#000,stroke-width:1px,color:#000
+    style DynamoDB fill:#ffc6ff,stroke:#000,stroke-width:1px,color:#000
 ```
+
+## Memory Flow
 
 ```mermaid
 sequenceDiagram
