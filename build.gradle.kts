@@ -12,10 +12,13 @@ repositories {
 val awsLambdaCoreVersion = "1.3.0"
 val awsLambdaEventsVersion = "3.16.1"
 val awsSdkVersion = "2.33.9"
+val jacksonVersion = "3.0.0"
 
 dependencies {
     implementation("com.amazonaws:aws-lambda-java-events:$awsLambdaEventsVersion")
     implementation("software.amazon.awssdk:dynamodb:$awsSdkVersion")
+
+    implementation("tools.jackson.module:jackson-module-kotlin:$jacksonVersion")
 
     implementation("com.amazonaws:aws-lambda-java-core:$awsLambdaCoreVersion")
     testImplementation(kotlin("test"))
