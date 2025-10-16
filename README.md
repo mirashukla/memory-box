@@ -3,6 +3,18 @@
 ## Memory Flow
 
 ```mermaid
+graph TD
+Client[Client Application] -->|HTTP Request| APIGateway[API Gateway]
+APIGateway -->|Calls| MemoryHandler[Memory Handler]
+MemoryHandler -->|Reads/Writes| DynamoDB[DynamoDB]
+
+    style Client fill:#f9f,stroke:#333,stroke-width:1px
+    style APIGateway fill:#bbf,stroke:#333,stroke-width:1px
+    style MemoryHandler fill:#bfb,stroke:#333,stroke-width:1px
+    style DynamoDB fill:#ffb,stroke:#333,stroke-width:1px
+```
+
+```mermaid
 sequenceDiagram
     participant Client
     participant APIGateway
@@ -22,3 +34,4 @@ sequenceDiagram
     DynamoDB-->>MemoryHandler: Confirmation
     MemoryHandler-->>APIGateway: Success response
     APIGateway-->>Client: Acknowledge save
+```
