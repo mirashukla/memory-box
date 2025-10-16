@@ -2,12 +2,14 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm") version "1.9.25"
-    id("com.gradleup.shadow") version "9.1.0"
     kotlin("plugin.serialization") version "2.2.20"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
-repositories {
-    mavenCentral()
+allprojects {
+    repositories {
+        mavenCentral()
+    }
 }
 
 val awsLambdaCoreVersion = "1.3.0"
@@ -15,32 +17,39 @@ val awsLambdaEventsVersion = "3.16.1"
 val awsSdkVersion = "2.33.9"
 val serializationVersion = "1.9.0"
 
-dependencies {
-    implementation("com.amazonaws:aws-lambda-java-events:$awsLambdaEventsVersion")
-    implementation("software.amazon.awssdk:dynamodb:$awsSdkVersion")
+// ───────────────────────────────────────────────────────────────
+// Backend module configuration
+// ───────────────────────────────────────────────────────────────
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
+project(":memory-box-backend") {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.serialization")
+    apply(plugin = "com.gradleup.shadow")
 
-    implementation("com.amazonaws:aws-lambda-java-core:$awsLambdaCoreVersion")
-    testImplementation(kotlin("test"))
-}
+    dependencies {
+        implementation("com.amazonaws:aws-lambda-java-events:$awsLambdaEventsVersion")
+        implementation("software.amazon.awssdk:dynamodb:$awsSdkVersion")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
+        implementation("com.amazonaws:aws-lambda-java-core:$awsLambdaCoreVersion")
 
-
-tasks {
-    named<ShadowJar>("shadowJar") {
-        archiveBaseName = "memory-box"
-        archiveClassifier = ""
-        archiveVersion = ""
+        testImplementation(kotlin("test"))
     }
 
-    named<Jar>("jar") {
-        enabled = false
+    kotlin {
+        jvmToolchain(21)
     }
 
-    test {
+    tasks.test {
         useJUnitPlatform()
     }
-}
-kotlin {
-    jvmToolchain(21)
+
+    tasks.named<ShadowJar>("shadowJar") {
+        archiveBaseName.set("memory-box")
+        archiveClassifier.set("")
+        archiveVersion.set("")
+    }
+
+    tasks.named<Jar>("jar") {
+        enabled = false
+    }
 }
