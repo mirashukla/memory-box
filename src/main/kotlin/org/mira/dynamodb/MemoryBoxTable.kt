@@ -1,5 +1,8 @@
 package org.mira.dynamodb
 
+import kotlinx.serialization.json.Json
+import org.mira.lambda.CreateMemoryRequest
+import org.mira.lambda.MemoryItem
 import org.mira.utils.PaginationToken.CreatedAt
 import org.mira.utils.PaginationUtils.decodeToken
 import org.mira.utils.PaginationUtils.encodeToken
@@ -11,6 +14,7 @@ import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 import java.time.Instant
 
 class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
+
     private companion object {
         const val MEMORY_BOX_TABLE_NAME = "MemoryBoxTable"
         const val USERNAME_ATTRIBUTE = "username"
@@ -18,19 +22,20 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
         const val MEMORY_ATTRIBUTE = "memory"
     }
 
-    fun saveMemory(username: String, memory: String) {
-        val createdAt = Instant.now().toString()
-        val request = PutItemRequest.builder().tableName(MEMORY_BOX_TABLE_NAME).item(
-            mapOf(
-                USERNAME_ATTRIBUTE to AttributeValue.builder().s(username).build(),
-                CREATED_AT_ATTRIBUTE to AttributeValue.builder().s(createdAt).build(),
-                MEMORY_ATTRIBUTE to AttributeValue.builder().s(memory).build()
-            )
-        ).build()
+    fun saveMemory(createMemoryRequest: CreateMemoryRequest) {
+        val item = mapOf(
+            USERNAME_ATTRIBUTE to AttributeValue.fromS(createMemoryRequest.username),
+            CREATED_AT_ATTRIBUTE to AttributeValue.fromS(Instant.now().toString()),
+            MEMORY_ATTRIBUTE to AttributeValue.fromS(Json.encodeToString<MemoryItem>(createMemoryRequest.memoryItem))
+        )
+
+        val request = PutItemRequest.builder()
+            .tableName(MEMORY_BOX_TABLE_NAME)
+            .item(item)
+            .build()
+
         dynamoDbClient.putItem(request)
     }
-
-    data class MemoriesResponse(val memories: List<Memory>, val nextPageToken: String?)
 
     fun getLatestMemories(pageSize: Int = 10, pageToken: String?): MemoriesResponse {
 
@@ -50,8 +55,7 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
             return dynamoDbClient.query(query.build()).items().map { convertMemoryEntry(it) }
         }
 
-
-        val paginatedResponse = paginate(
+        val page = paginate(
             pageSize = pageSize,
             pageToken = pageToken,
             decodeToken = { decodeToken<CreatedAt>(it) },
@@ -60,16 +64,12 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
             extractToken = { CreatedAt(Instant.parse(it.createdAt)) }
         )
 
-        return MemoriesResponse(paginatedResponse.items, paginatedResponse.nextPageToken)
+        return MemoriesResponse(page.items, page.nextPageToken)
     }
 
-
-    private fun convertMemoryEntry(memoryEntry: Map<String, AttributeValue>): Memory =
-        Memory(
-            username = memoryEntry["username"]?.s() ?: "",
-            createdAt = memoryEntry["createdAt"]?.s() ?: "",
-            memory = memoryEntry["memory"]?.s() ?: ""
-        )
-
+    private fun convertMemoryEntry(entry: Map<String, AttributeValue>) = Memory(
+        username = entry[USERNAME_ATTRIBUTE]?.s() ?: "",
+        createdAt = entry[CREATED_AT_ATTRIBUTE]?.s() ?: "",
+        memory = entry[MEMORY_ATTRIBUTE]?.s() ?: ""
+    )
 }
-
