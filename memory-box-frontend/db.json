@@ -1,0 +1,23 @@
+{
+  "memories": {
+    "memories": [
+      {
+        "username": "alice",
+        "createdAt": "2025-10-19T12:00:00Z",
+        "memory": {
+          "title": "First Day at Work",
+          "content": "I met my new team and had a great first day!"
+        }
+      },
+      {
+        "username": "bob",
+        "createdAt": "2025-10-18T09:30:00Z",
+        "memory": {
+          "title": "Hiking Trip",
+          "content": "Climbed a mountain and took amazing photos!"
+        }
+      }
+    ],
+    "nextPageToken": null
+  }
+}
