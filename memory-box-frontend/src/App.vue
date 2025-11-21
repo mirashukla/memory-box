@@ -15,7 +15,7 @@ function handleGetStarted() {
     <!-- Navbar -->
     <header class="navbar">
       <div class="logo">
-        <img src="C:\Users\baile\Downloads\memoriesLogo.png" alt="Memory Box logo" />
+        <img src="@/images/MemoryBox.png" alt="Memory Box logo" />
         <h1>Memory Box</h1>
       </div>
       <nav>
@@ -39,10 +39,7 @@ function handleGetStarted() {
       </div>
 
       <div class="mockup">
-        <img
-          src="https://images.unsplash.com/photo-1556767576-cfba8e6c2c86?auto=format&fit=crop&w=1200&q=80"
-          alt="Memory Box preview"
-        />
+        <img src="@/images/leoPhoto.jpeg"alt="Memory Box preview" />
       </div>
     </main>
 
@@ -188,8 +185,8 @@ nav a:hover {
 }
 
 .mockup img {
-  width: 90%;
-  max-width: 800px;
+  width: 20%;
+  max-width: 400px;
   border-radius: 24px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
