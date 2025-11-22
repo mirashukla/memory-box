@@ -14,7 +14,12 @@
       <!-- Sign In Form -->
       <form class="auth-form" @submit.prevent="handleSignIn">
         <input type="email" v-model="email" placeholder="Email" required />
-        <input type="password" v-model="password" placeholder="Password" required />
+            <div class="password-field">
+              <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" required />
+              <button type="button" class="toggle-btn" @click="showPassword = !showPassword">
+                {{ showPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
 
         <button type="submit" class="primary-btn auth-btn">Sign In</button>
       </form>
@@ -42,6 +47,8 @@ function handleSignIn() {
   console.log('Signing in with', email.value, password.value)
   alert('Sign in clicked!')
 }
+
+const showPassword = ref(false)
 </script>
 
 <style scoped>
@@ -137,6 +144,30 @@ h2 {
 
 .secondary-btn:hover {
   background: #fdf2f8;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #ec4899;
 }
 
 /* Links */
