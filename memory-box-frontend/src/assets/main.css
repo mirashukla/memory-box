@@ -1,0 +1,12 @@
+/* Global font */
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Optional: smooth rendering */
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
