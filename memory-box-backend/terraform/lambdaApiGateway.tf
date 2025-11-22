@@ -34,6 +34,26 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Attach access to secret
+resource "aws_iam_role_policy" "lambda_ssm" {
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ],
+        Resource = var.auth_secret_arn
+      }
+    ]
+  })
+}
+
+
 # Lambda function
 resource "aws_lambda_function" "memory_box" {
   function_name    = "memory-box"
@@ -44,6 +64,13 @@ resource "aws_lambda_function" "memory_box" {
   role             = aws_iam_role.lambda_exec.arn
   source_code_hash = filebase64sha256("${path.module}/../build/libs/memory-box.jar")
   timeout          = 30
+  environment {
+    variables = {
+      USERS_TABLE       = aws_dynamodb_table.users.name
+      MEMORY_BOX_TABLE  = aws_dynamodb_table.memories.name
+      AUTH_SECRET_PARAM = var.auth_secret_arn
+    }
+  }
 }
 
 # API Gateway (HTTP API)

@@ -20,6 +20,17 @@ resource "aws_dynamodb_table" "memories" {
   }
 }
 
+resource "aws_dynamodb_table" "users" {
+  name         = "MemoryBoxUsers"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email"
+
+  attribute {
+    name = "email"
+    type = "S"
+  }
+}
+
 resource "aws_iam_role_policy" "lambda_dynamodb" {
   role = aws_iam_role.lambda_exec.id
 
@@ -30,9 +41,13 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
         Effect = "Allow"
         Action = [
           "dynamodb:PutItem",
-          "dynamodb:Query"
+          "dynamodb:Query",
+          "dynamodb:GetItem"
         ]
-        Resource = aws_dynamodb_table.memories.arn
+        Resource = [
+          aws_dynamodb_table.memories.arn,
+          aws_dynamodb_table.users.arn
+        ]
       }
     ]
   })
