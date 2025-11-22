@@ -38,17 +38,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import api from '@/api/client'
 
 const email = ref('')
 const password = ref('')
 
-function handleSignIn() {
-  // Later: replace with real auth
-  console.log('Signing in with', email.value, password.value)
-  alert('Sign in clicked!')
-}
-
 const showPassword = ref(false)
+
+const handleSignIn = async (email: string, password: string) => {
+  try {
+    const res = await api.post('/auth/login', {
+      email: email,
+      password: password
+    })
+    const token = res.data.token
+    if (token) {
+      localStorage.setItem('jwt', token)
+      alert('Login successful!')
+      router.push('/') // Redirect to home
+    } else {
+      alert(res.data.message)
+    }
+  } catch (err: any) {
+    console.error(err)
+    alert(err.response?.data?.message || 'Login failed')
+  }
+}
 </script>
 
 <style scoped>

@@ -2,9 +2,10 @@ package org.mira.lambda
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse
 import org.mira.dynamodb.MemoryBoxTable
+import org.mira.dynamodb.UsersTable
 import org.mira.lambda.AuthenticationHandler.Companion.mapToCreateUserRequest
 import org.mira.lambda.AuthenticationHandler.Companion.mapToGetUserRequest
 import org.mira.lambda.MemoriesHandler.Companion.mapToCreateMemoryRequest
@@ -13,7 +14,7 @@ import org.mira.lambda.ResponseHelper.response
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HTTPResponse> {
+class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 
     private val region = System.getenv("AWS_REGION") ?: "eu-west-1"
     private val dynamoDbClient = DynamoDbClient.builder()
@@ -21,20 +22,25 @@ class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HT
         .build()
 
     private val memoryBoxTable by lazy { MemoryBoxTable(dynamoDbClient) }
+    private val usersTable by lazy { UsersTable(dynamoDbClient) }
     private val memoriesHandler by lazy { MemoriesHandler(memoryBoxTable) }
-    private val authenticationHandler by lazy { AuthenticationHandler() }
+    private val authenticationHandler by lazy { AuthenticationHandler(usersTable) }
 
     override fun handleRequest(
-        request: APIGatewayProxyRequestEvent,
+        request: APIGatewayV2HTTPEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
 
-        context.logger.log("Received request: ${request.httpMethod} ${request.path}\n")
+        val method = request.requestContext?.http?.method
+        val path = request.requestContext?.http?.path
+
+        context.logger.log("Received request: $method $path.\n")
 
         return try {
-            when (request.path) {
+            when (path) {
                 "/memories" -> handleMemories(request, context)
-                "/auth" -> handleAuthentication(request, context)
+                "/auth/register" -> handleAuthentication(request, context)
+                "/auth/login" -> handleAuthentication(request, context)
                 else -> response(404, """{"error":"Not Found"}""")
             }
         } catch (e: Exception) {
@@ -44,28 +50,32 @@ class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HT
     }
 
     fun handleMemories(
-        request: APIGatewayProxyRequestEvent,
+        request: APIGatewayV2HTTPEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
-        val action = Memories.fromMethod(request.httpMethod)
+        val action = Memories.fromMethod(request.requestContext.http.method)
 
         return when (action) {
-            is Memories.Post -> memoriesHandler.handlePostMemory(mapToCreateMemoryRequest(request))
+            is Memories.Post -> memoriesHandler.handlePostMemory(mapToCreateMemoryRequest(request.body))
             is Memories.Get -> memoriesHandler.handleGetMemoriesPaginated(mapToGetMemoryRequest(request))
             is Memories.Unknown -> response(405, """{"error":"Method not allowed"}""")
         }
     }
 
     fun handleAuthentication(
-        request: APIGatewayProxyRequestEvent,
+        request: APIGatewayV2HTTPEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
 
-        val action = Authentication.fromMethod(request.httpMethod)
+        val action = Authentication.fromMethod(request.requestContext.http.method)
 
         return when (action) {
-            is Authentication.Post -> authenticationHandler.handleRegister(mapToCreateUserRequest(request))
-            is Authentication.Get -> authenticationHandler.handleSignIn(mapToGetUserRequest(request))
+            is Authentication.Post -> authenticationHandler.handleRegister(
+                mapToCreateUserRequest(request.body),
+                context.logger
+            )
+
+            is Authentication.Get -> authenticationHandler.handleSignIn(mapToGetUserRequest(request.body))
             is Authentication.Unknown -> response(405, """{"error":"Method not allowed"}""")
         }
     }

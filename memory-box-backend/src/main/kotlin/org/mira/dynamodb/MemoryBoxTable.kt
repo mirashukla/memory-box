@@ -1,7 +1,6 @@
 package org.mira.dynamodb
 
 import kotlinx.serialization.json.Json
-import org.mira.lambda.CreateMemoryRequest
 import org.mira.lambda.MemoryItem
 import org.mira.utils.PaginationToken.CreatedAt
 import org.mira.utils.PaginationUtils.decodeToken
@@ -17,14 +16,14 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
 
     private companion object {
         const val MEMORY_BOX_TABLE_NAME = "MemoryBoxTable"
-        const val USERNAME_ATTRIBUTE = "username"
+        const val EMAIL_ATTRIBUTE = "email"
         const val CREATED_AT_ATTRIBUTE = "createdAt"
         const val MEMORY_ATTRIBUTE = "memory"
     }
 
-    fun saveMemory(username: String, memoryItem: MemoryItem) {
+    fun saveMemory(email: String, memoryItem: MemoryItem) {
         val item = mapOf(
-            USERNAME_ATTRIBUTE to AttributeValue.fromS(username),
+            EMAIL_ATTRIBUTE to AttributeValue.fromS(email),
             CREATED_AT_ATTRIBUTE to AttributeValue.fromS(Instant.now().toString()),
             MEMORY_ATTRIBUTE to AttributeValue.fromS(Json.encodeToString<MemoryItem>(memoryItem))
         )
@@ -43,9 +42,9 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
             val query = QueryRequest.builder()
                 .tableName(MEMORY_BOX_TABLE_NAME)
                 .scanIndexForward(false)
-                .keyConditionExpression("username = :username")
+                .keyConditionExpression("email = :email")
                 .expressionAttributeValues(
-                    mapOf(":username" to AttributeValue.builder().s("johndoe").build())
+                    mapOf(":email" to AttributeValue.builder().s("mira_shukla@outlook.com").build())
                 )
                 .limit(pageSize)
 
@@ -72,7 +71,7 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
     }
 
     private fun convertMemoryEntry(entry: Map<String, AttributeValue>) = Memory(
-        username = entry[USERNAME_ATTRIBUTE]?.s() ?: "",
+        email = entry[EMAIL_ATTRIBUTE]?.s() ?: "",
         createdAt = entry[CREATED_AT_ATTRIBUTE]?.s() ?: "",
         memory = Json.decodeFromString<MemoryItem>(entry[MEMORY_ATTRIBUTE]?.s() ?: "")
     )

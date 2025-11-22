@@ -77,6 +77,12 @@ resource "aws_lambda_function" "memory_box" {
 resource "aws_apigatewayv2_api" "http_api" {
   name          = "memory-box-api"
   protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins = ["http://localhost:5173"]
+    allow_methods = ["GET", "POST", "OPTIONS"]
+    allow_headers = ["Content-Type", "Authorization"]
+  }
 }
 
 resource "aws_apigatewayv2_integration" "lambda_integration" {
@@ -116,5 +122,17 @@ resource "aws_apigatewayv2_route" "post_memories" {
 resource "aws_apigatewayv2_route" "get_memories" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "GET /memories"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_register" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /auth/register"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_login" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /auth/login"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }

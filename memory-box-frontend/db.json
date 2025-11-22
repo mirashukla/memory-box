@@ -2,7 +2,7 @@
   "memories": {
     "memories": [
       {
-        "username": "alice",
+        "email": "alice",
         "createdAt": "2025-10-19T12:00:00Z",
         "memory": {
           "title": "First Day at Work",
@@ -10,7 +10,7 @@
         }
       },
       {
-        "username": "bob",
+        "email": "bob",
         "createdAt": "2025-10-18T09:30:00Z",
         "memory": {
           "title": "Hiking Trip",

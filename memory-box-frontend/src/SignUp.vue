@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import api from '@/api/client'
 
 const router = useRouter()
 const email = ref('')
@@ -52,18 +53,35 @@ const error = ref('')
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
-function handleSignUp() {
+async function handleSignUp() {
   error.value = ''
+
+  if (!email.value || !password.value) {
+    error.value = 'Email and password are required!'
+    return
+  }
+
   if (password.value !== confirmPassword.value) {
     error.value = 'Passwords do not match!'
     return
   }
 
-  // TODO: Replace with real auth logic
-  console.log('Signing up with', email.value, password.value)
-  alert('Sign up successful!')
+  await register(email.value, password.value)
+}
 
-  router.push('/')
+const register = async (email: string, password: string) => {
+  try {
+    const res = await api.post('/auth/register', {
+      email: email,
+      password: password
+    })
+    alert(res.data.message)
+    // Redirect to sign-in page
+    router.push('/sign-in')
+  } catch (err: any) {
+    console.error(err)
+    alert(err.response?.data?.message || 'Registration failed')
+  }
 }
 </script>
 

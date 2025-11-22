@@ -2,11 +2,11 @@
 resource "aws_dynamodb_table" "memories" {
   name         = "MemoryBoxTable"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "username"
+  hash_key     = "email"
   range_key    = "createdAt"
 
   attribute {
-    name = "username"
+    name = "email"
     type = "S"
   }
 
@@ -23,10 +23,10 @@ resource "aws_dynamodb_table" "memories" {
 resource "aws_dynamodb_table" "users" {
   name         = "MemoryBoxUsers"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "username"
+  hash_key     = "email"
 
   attribute {
-    name = "username"
+    name = "email"
     type = "S"
   }
 }

@@ -1,6 +1,6 @@
 package org.mira.lambda
 
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
+import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse
 import kotlinx.serialization.json.Json
 import org.mira.dynamodb.MemoryBoxTable
@@ -9,12 +9,11 @@ import org.mira.lambda.ResponseHelper.response
 class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
 
     companion object {
-        fun mapToCreateMemoryRequest(request: APIGatewayProxyRequestEvent): CreateMemoryRequest {
-            val body = request.body
-            return Json.decodeFromString<CreateMemoryRequest>(body)
+        fun mapToCreateMemoryRequest(requestBody: String): CreateMemoryRequest {
+            return Json.decodeFromString<CreateMemoryRequest>(requestBody)
         }
 
-        fun mapToGetMemoryRequest(request: APIGatewayProxyRequestEvent): GetMemoriesRequest {
+        fun mapToGetMemoryRequest(request: APIGatewayV2HTTPEvent): GetMemoriesRequest {
 
             fun getPageSize(pageSize: Int?): Int {
                 return if (pageSize == null || pageSize < 1) {
@@ -34,7 +33,7 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
     fun handlePostMemory(
         request: CreateMemoryRequest,
     ): APIGatewayV2HTTPResponse {
-        memoryBoxTable.saveMemory(request.username, request.memoryItem)
+        memoryBoxTable.saveMemory(request.email, request.memoryItem)
         return response(200, """{"message":"Memory added!"}""")
     }
 

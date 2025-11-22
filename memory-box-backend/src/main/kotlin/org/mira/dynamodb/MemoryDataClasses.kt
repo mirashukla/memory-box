@@ -5,7 +5,7 @@ import org.mira.lambda.MemoryItem
 
 @Serializable
 data class Memory(
-    val username: String,
+    val email: String,
     val createdAt: String,
     val memory: MemoryItem
 )
