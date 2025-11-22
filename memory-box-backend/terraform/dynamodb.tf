@@ -23,10 +23,10 @@ resource "aws_dynamodb_table" "memories" {
 resource "aws_dynamodb_table" "users" {
   name         = "MemoryBoxUsers"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "email"
+  hash_key     = "username"
 
   attribute {
-    name = "email"
+    name = "username"
     type = "S"
   }
 }

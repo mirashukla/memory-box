@@ -4,8 +4,12 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse
-import kotlinx.serialization.json.Json
 import org.mira.dynamodb.MemoryBoxTable
+import org.mira.lambda.AuthenticationHandler.Companion.mapToCreateUserRequest
+import org.mira.lambda.AuthenticationHandler.Companion.mapToGetUserRequest
+import org.mira.lambda.MemoriesHandler.Companion.mapToCreateMemoryRequest
+import org.mira.lambda.MemoriesHandler.Companion.mapToGetMemoryRequest
+import org.mira.lambda.ResponseHelper.response
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -17,6 +21,8 @@ class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HT
         .build()
 
     private val memoryBoxTable by lazy { MemoryBoxTable(dynamoDbClient) }
+    private val memoriesHandler by lazy { MemoriesHandler(memoryBoxTable) }
+    private val authenticationHandler by lazy { AuthenticationHandler() }
 
     override fun handleRequest(
         request: APIGatewayProxyRequestEvent,
@@ -28,6 +34,7 @@ class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HT
         return try {
             when (request.path) {
                 "/memories" -> handleMemories(request, context)
+                "/auth" -> handleAuthentication(request, context)
                 else -> response(404, """{"error":"Not Found"}""")
             }
         } catch (e: Exception) {
@@ -36,44 +43,31 @@ class MemoryHandler : RequestHandler<APIGatewayProxyRequestEvent, APIGatewayV2HT
         }
     }
 
-    private fun handleMemories(
+    fun handleMemories(
         request: APIGatewayProxyRequestEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
         val action = Memories.fromMethod(request.httpMethod)
 
         return when (action) {
-            is Memories.Post -> handlePostMemory(request, context)
-            is Memories.Get -> handleGetMemoriesPaginated(request, context)
+            is Memories.Post -> memoriesHandler.handlePostMemory(mapToCreateMemoryRequest(request))
+            is Memories.Get -> memoriesHandler.handleGetMemoriesPaginated(mapToGetMemoryRequest(request))
             is Memories.Unknown -> response(405, """{"error":"Method not allowed"}""")
         }
     }
 
-    private fun handlePostMemory(
+    fun handleAuthentication(
         request: APIGatewayProxyRequestEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
-        val body = request.body ?: return response(400, """{"error":"Missing body"}""")
-        val memoryRequest = Json.decodeFromString<CreateMemoryRequest>(body)
-        context.logger.log("Saving memory for user: ${memoryRequest.username}")
-        memoryBoxTable.saveMemory(memoryRequest)
-        return response(200, """{"message":"Memory added!"}""")
+
+        val action = Authentication.fromMethod(request.httpMethod)
+
+        return when (action) {
+            is Authentication.Post -> authenticationHandler.handleRegister(mapToCreateUserRequest(request))
+            is Authentication.Get -> authenticationHandler.handleSignIn(mapToGetUserRequest(request))
+            is Authentication.Unknown -> response(405, """{"error":"Method not allowed"}""")
+        }
     }
 
-    private fun handleGetMemoriesPaginated(
-        request: APIGatewayProxyRequestEvent,
-        context: Context
-    ): APIGatewayV2HTTPResponse {
-        val pageToken = request.queryStringParameters?.get("pageToken")
-        val result = memoryBoxTable.getLatestMemories(pageSize = 10, pageToken = pageToken)
-        context.logger.log("Retrieving memory for user:")
-        return response(200, Json.encodeToString(result))
-    }
-
-    private fun response(status: Int, body: String): APIGatewayV2HTTPResponse =
-        APIGatewayV2HTTPResponse.builder()
-            .withStatusCode(status)
-            .withHeaders(mapOf("Content-Type" to "application/json"))
-            .withBody(body)
-            .build()
 }

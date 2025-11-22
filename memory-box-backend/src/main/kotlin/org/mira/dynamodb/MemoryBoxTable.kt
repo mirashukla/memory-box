@@ -22,11 +22,11 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
         const val MEMORY_ATTRIBUTE = "memory"
     }
 
-    fun saveMemory(createMemoryRequest: CreateMemoryRequest) {
+    fun saveMemory(username: String, memoryItem: MemoryItem) {
         val item = mapOf(
-            USERNAME_ATTRIBUTE to AttributeValue.fromS(createMemoryRequest.username),
+            USERNAME_ATTRIBUTE to AttributeValue.fromS(username),
             CREATED_AT_ATTRIBUTE to AttributeValue.fromS(Instant.now().toString()),
-            MEMORY_ATTRIBUTE to AttributeValue.fromS(Json.encodeToString<MemoryItem>(createMemoryRequest.memoryItem))
+            MEMORY_ATTRIBUTE to AttributeValue.fromS(Json.encodeToString<MemoryItem>(memoryItem))
         )
 
         val request = PutItemRequest.builder()
@@ -39,16 +39,20 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
 
     fun getLatestMemories(pageSize: Int = 10, pageToken: String?): MemoriesResponse {
 
-        fun fetchPage(pageToken: CreatedAt?, pageSize: Int): List<Memory> {
+        fun fetchPage(createdAtToken: CreatedAt?, pageSize: Int): List<Memory> {
             val query = QueryRequest.builder()
                 .tableName(MEMORY_BOX_TABLE_NAME)
                 .scanIndexForward(false)
+                .keyConditionExpression("username = :username")
+                .expressionAttributeValues(
+                    mapOf(":username" to AttributeValue.builder().s("johndoe").build())
+                )
                 .limit(pageSize)
 
-            if (pageToken != null) {
+            if (createdAtToken != null) {
                 query.keyConditionExpression("createdAt <= :start")
                     .expressionAttributeValues(
-                        mapOf(":start" to AttributeValue.fromS(pageToken.time.toString()))
+                        mapOf(":start" to AttributeValue.fromS(createdAtToken.time.toString()))
                     )
             }
 
