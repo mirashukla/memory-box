@@ -12,7 +12,7 @@
       <form class="auth-form" @submit.prevent="handleReset">
         <input type="email" v-model="email" placeholder="Email" required />
         <div class="password-field">
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="New Password" required />
+          <input :type="showPassword ? 'text' : 'password'" v-model="newPassword" placeholder="New Password" required />
           <button type="button" class="toggle-btn" @click="showPassword = !showPassword">
             {{ showPassword ? 'Hide' : 'Show' }}
           </button>
