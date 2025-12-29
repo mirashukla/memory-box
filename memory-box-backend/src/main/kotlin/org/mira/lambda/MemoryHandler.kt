@@ -39,7 +39,7 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         return try {
             when (path) {
                 "/memories" -> handleMemories(request, context)
-                "/auth/register" -> handleAuthentication(request, context)
+                "/auth/register" -> handleRegistration(request, context)
                 "/auth/login" -> handleAuthentication(request, context)
                 else -> response(404, """{"error":"Not Found"}""")
             }
@@ -62,6 +62,21 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         }
     }
 
+    fun handleRegistration(
+        request: APIGatewayV2HTTPEvent,
+        context: Context
+    ): APIGatewayV2HTTPResponse {
+
+        val method = request.requestContext.http.method
+
+        return if (method == "POST")
+            authenticationHandler.handleRegister(
+                mapToCreateUserRequest(request.body),
+                context.logger
+            )
+        else response(405, """{"error":"Method not allowed"}""")
+    }
+
     fun handleAuthentication(
         request: APIGatewayV2HTTPEvent,
         context: Context
@@ -70,13 +85,8 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         val action = Authentication.fromMethod(request.requestContext.http.method)
 
         return when (action) {
-            is Authentication.Post -> authenticationHandler.handleRegister(
-                mapToCreateUserRequest(request.body),
-                context.logger
-            )
-
             is Authentication.Get -> authenticationHandler.handleSignIn(mapToGetUserRequest(request.body))
-            is Authentication.Unknown -> response(405, """{"error":"Method not allowed"}""")
+            else -> response(405, """{"error":"Method not allowed"}""")
         }
     }
 

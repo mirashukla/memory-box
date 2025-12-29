@@ -27,13 +27,13 @@ class UsersTable(private val dynamoDbClient: DynamoDbClient) {
         dynamoDbClient.putItem(request)
     }
 
-    fun getUser(email: String): UserInformation {
+    fun getUser(email: String): UserInformation? {
 
         val request = GetItemRequest.builder()
             .tableName(USERS_TABLE_NAME)
             .key(
                 mapOf(
-                    "email" to AttributeValue.builder().s(email).build()
+                    EMAIL_ATTRIBUTE to AttributeValue.builder().s(email).build()
                 )
             )
             .build()
@@ -41,8 +41,11 @@ class UsersTable(private val dynamoDbClient: DynamoDbClient) {
         val response = dynamoDbClient.getItem(request)
 
         val item = (if (response.hasItem()) response.item() else null)
-        return UserInformation(
-            email = item?.get(EMAIL_ATTRIBUTE)?.s() ?: error("Missing email attribute")
-        )
+        return if (item != null) {
+            UserInformation(
+                email = item[EMAIL_ATTRIBUTE]?.s() ?: error("Missing email attribute")
+            )
+        } else null
+
     }
 }

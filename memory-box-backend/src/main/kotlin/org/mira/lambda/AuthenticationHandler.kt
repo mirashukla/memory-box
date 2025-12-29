@@ -23,9 +23,17 @@ class AuthenticationHandler(val usersTable: UsersTable) {
 
         return try {
             logger?.log("adding user")
-            usersTable.registerUser(request.email, request.password)
-            logger?.log("user added")
-            response(200, "Success user added")
+            val user = usersTable.getUser(request.email)
+            if (user == null) {
+                usersTable.registerUser(request.email, request.password)
+                logger?.log("user added")
+                response(200, "Success user added")
+            } else {
+                return response(
+                    403,
+                    """{"error":"User already exists"}"""
+                )
+            }
         } catch (exception: Exception) {
             logger?.log("Error: $exception")
             response(

@@ -38,27 +38,22 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/api/client'
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
-
 const showPassword = ref(false)
 
-const handleSignIn = async (email: string, password: string) => {
+const handleSignIn = async () => {
   try {
-    const res = await api.post('/auth/login', {
-      email: email,
-      password: password
+      const res = await api.post('/auth/login', {
+      email: email.value,
+      password: password.value
     })
-    const token = res.data.token
-    if (token) {
-      localStorage.setItem('jwt', token)
-      alert('Login successful!')
-      router.push('/') // Redirect to home
-    } else {
-      alert(res.data.message)
-    }
+      router.push('/memories') // redirect after login
   } catch (err: any) {
     console.error(err)
     alert(err.response?.data?.message || 'Login failed')

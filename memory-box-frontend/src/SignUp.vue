@@ -80,7 +80,7 @@ const register = async (email: string, password: string) => {
     router.push('/sign-in')
   } catch (err: any) {
     console.error(err)
-    alert(err.response?.data?.message || 'Registration failed')
+    alert(err.response?.data?.error || 'Registration failed')
   }
 }
 </script>
