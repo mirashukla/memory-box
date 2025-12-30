@@ -55,8 +55,8 @@ const handleSignIn = async () => {
     })
       router.push('/memories') // redirect after login
   } catch (err: any) {
+    console.log("POST /auth/login failed")
     console.error(err)
-    alert(err.response?.data?.message || 'Login failed')
   }
 }
 </script>

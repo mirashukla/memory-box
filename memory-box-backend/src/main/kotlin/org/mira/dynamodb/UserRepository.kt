@@ -3,20 +3,24 @@ package org.mira.dynamodb
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 
-class UsersTable(private val dynamoDbClient: DynamoDbClient) {
+class UserRepository(private val dynamoDbClient: DynamoDbClient) {
 
-    private companion object {
+    companion object {
         const val USERS_TABLE_NAME = "MemoryBoxUsers"
         const val EMAIL_ATTRIBUTE = "email"
-        const val PASSWORD_ATTRIBUTE = "password"
+        const val HASH_ATTRIBUTE = "hash"
+        const val SALT_ATTRIBUTE = "salt"
     }
 
-    fun registerUser(email: String, password: String) {
+    fun registerUser(email: String, hash: String, salt: String) {
+
         val item = mapOf(
             EMAIL_ATTRIBUTE to AttributeValue.fromS(email),
-            PASSWORD_ATTRIBUTE to AttributeValue.fromS(password),
+            HASH_ATTRIBUTE to AttributeValue.fromS(hash),
+            SALT_ATTRIBUTE to AttributeValue.fromS(salt),
         )
 
         val request = PutItemRequest.builder()
@@ -38,14 +42,23 @@ class UsersTable(private val dynamoDbClient: DynamoDbClient) {
             )
             .build()
 
-        val response = dynamoDbClient.getItem(request)
+        val response: GetItemResponse = dynamoDbClient.getItem(request)
 
-        val item = (if (response.hasItem()) response.item() else null)
-        return if (item != null) {
-            UserInformation(
-                email = item[EMAIL_ATTRIBUTE]?.s() ?: error("Missing email attribute")
+        return UserInformation.from(response)
+    }
+
+    fun getUserAuthentication(email: String): UserAuthentication? {
+        val request = GetItemRequest.builder()
+            .tableName(USERS_TABLE_NAME)
+            .key(
+                mapOf(
+                    EMAIL_ATTRIBUTE to AttributeValue.builder().s(email).build()
+                )
             )
-        } else null
+            .build()
 
+        val response: GetItemResponse = dynamoDbClient.getItem(request)
+
+        return UserAuthentication.from(response)
     }
 }

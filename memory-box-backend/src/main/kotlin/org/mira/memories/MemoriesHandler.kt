@@ -1,16 +1,18 @@
-package org.mira.lambda
+package org.mira.memories
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse
 import kotlinx.serialization.json.Json
 import org.mira.dynamodb.MemoryBoxTable
-import org.mira.lambda.ResponseHelper.response
+import org.mira.lambda.CreateMemoryRequest
+import org.mira.lambda.GetMemoriesRequest
+import org.mira.lambda.ResponseHelper
 
 class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
 
     companion object {
         fun mapToCreateMemoryRequest(requestBody: String): CreateMemoryRequest {
-            return Json.decodeFromString<CreateMemoryRequest>(requestBody)
+            return Json.Default.decodeFromString<CreateMemoryRequest>(requestBody)
         }
 
         fun mapToGetMemoryRequest(request: APIGatewayV2HTTPEvent): GetMemoriesRequest {
@@ -26,7 +28,7 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
             val queryStringParameters = request.queryStringParameters
             val pageSize = queryStringParameters["pageSize"]?.toIntOrNull()
             val pageToken = queryStringParameters["pageToken"]
-            return GetMemoriesRequest(getPageSize(pageSize), pageToken)
+            return GetMemoriesRequest("mira_shukla@outlook.com", getPageSize(pageSize), pageToken)
         }
     }
 
@@ -34,14 +36,18 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
         request: CreateMemoryRequest,
     ): APIGatewayV2HTTPResponse {
         memoryBoxTable.saveMemory(request.email, request.memoryItem)
-        return response(200, """{"message":"Memory added!"}""")
+        return ResponseHelper.response(200, """{"message":"Memory added!"}""")
     }
 
     fun handleGetMemoriesPaginated(
         request: GetMemoriesRequest
     ): APIGatewayV2HTTPResponse {
-        val result = memoryBoxTable.getLatestMemories(pageSize = request.pageSize, pageToken = request.pageToken)
-        return response(200, Json.encodeToString(result))
+        val result = memoryBoxTable.getLatestMemories(
+            email = request.email,
+            pageSize = request.pageSize,
+            pageToken = request.pageToken
+        )
+        return ResponseHelper.response(200, Json.Default.encodeToString(result))
     }
 
 

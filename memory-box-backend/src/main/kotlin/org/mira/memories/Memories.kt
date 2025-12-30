@@ -1,4 +1,4 @@
-package org.mira.lambda
+package org.mira.memories
 
 sealed class Memories {
     object Post : Memories()
@@ -8,9 +8,9 @@ sealed class Memories {
     companion object {
         fun fromMethod(method: String) =
             when (method) {
-            "POST" -> Post
-            "GET" -> Get
-            else -> Unknown
-        }
+                "POST" -> Post
+                "GET" -> Get
+                else -> Unknown
+            }
     }
 }

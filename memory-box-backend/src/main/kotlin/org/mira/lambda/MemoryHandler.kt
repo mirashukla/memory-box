@@ -4,13 +4,18 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPEvent
 import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse
+import org.mira.authentication.Authentication
+import org.mira.authentication.AuthenticationHandler
 import org.mira.dynamodb.MemoryBoxTable
-import org.mira.dynamodb.UsersTable
-import org.mira.lambda.AuthenticationHandler.Companion.mapToCreateUserRequest
-import org.mira.lambda.AuthenticationHandler.Companion.mapToGetUserRequest
-import org.mira.lambda.MemoriesHandler.Companion.mapToCreateMemoryRequest
-import org.mira.lambda.MemoriesHandler.Companion.mapToGetMemoryRequest
+import org.mira.dynamodb.UserRepository
+import org.mira.authentication.AuthenticationHandler.Companion.mapToCreateUserRequest
+import org.mira.authentication.AuthenticationHandler.Companion.mapToGetUserRequest
+import org.mira.authentication.PasswordService
+import org.mira.memories.MemoriesHandler.Companion.mapToCreateMemoryRequest
+import org.mira.memories.MemoriesHandler.Companion.mapToGetMemoryRequest
 import org.mira.lambda.ResponseHelper.response
+import org.mira.memories.Memories
+import org.mira.memories.MemoriesHandler
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -22,9 +27,10 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         .build()
 
     private val memoryBoxTable by lazy { MemoryBoxTable(dynamoDbClient) }
-    private val usersTable by lazy { UsersTable(dynamoDbClient) }
+    private val userRepository by lazy { UserRepository(dynamoDbClient) }
     private val memoriesHandler by lazy { MemoriesHandler(memoryBoxTable) }
-    private val authenticationHandler by lazy { AuthenticationHandler(usersTable) }
+    private val passwordService by lazy { PasswordService() }
+    private val authenticationHandler by lazy { AuthenticationHandler(userRepository, passwordService) }
 
     override fun handleRequest(
         request: APIGatewayV2HTTPEvent,
@@ -85,7 +91,7 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         val action = Authentication.fromMethod(request.requestContext.http.method)
 
         return when (action) {
-            is Authentication.Get -> authenticationHandler.handleSignIn(mapToGetUserRequest(request.body))
+            is Authentication.Post -> authenticationHandler.handleSignIn(mapToGetUserRequest(request.body))
             else -> response(405, """{"error":"Method not allowed"}""")
         }
     }

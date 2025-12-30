@@ -75,12 +75,12 @@ const register = async (email: string, password: string) => {
       email: email,
       password: password
     })
-    alert(res.data.message)
+    console.log(res.data)
     // Redirect to sign-in page
     router.push('/sign-in')
   } catch (err: any) {
+    console.log("POST /auth/register failed")
     console.error(err)
-    alert(err.response?.data?.error || 'Registration failed')
   }
 }
 </script>

@@ -36,7 +36,7 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
         dynamoDbClient.putItem(request)
     }
 
-    fun getLatestMemories(pageSize: Int = 10, pageToken: String?): MemoriesResponse {
+    fun getLatestMemories(email: String, pageSize: Int = 10, pageToken: String?): MemoriesResponse {
 
         fun fetchPage(createdAtToken: CreatedAt?, pageSize: Int): List<Memory> {
             val query = QueryRequest.builder()
@@ -44,7 +44,7 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
                 .scanIndexForward(false)
                 .keyConditionExpression("email = :email")
                 .expressionAttributeValues(
-                    mapOf(":email" to AttributeValue.builder().s("mira_shukla@outlook.com").build())
+                    mapOf(":email" to AttributeValue.builder().s(email).build())
                 )
                 .limit(pageSize)
 

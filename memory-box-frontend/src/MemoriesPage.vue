@@ -75,20 +75,11 @@ async function loadMemories(isLoadMore = false) {
   else loading.value = true
 
   try {
-    const token = localStorage.getItem('jwt')
-    if (!token) {
-      router.push('/sign-in')
-      return
-    }
-
     const response = await api.get<PaginatedMemoriesResponse>('/memories', {
       params: {
         pageSize,
         pageToken: nextPageToken || undefined
       },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
     })
 
     if (isLoadMore) {

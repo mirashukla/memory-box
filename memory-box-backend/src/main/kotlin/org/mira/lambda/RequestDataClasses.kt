@@ -9,7 +9,7 @@ data class CreateMemoryRequest(val email: String, val memoryItem: MemoryItem)
 data class MemoryItem(val title: String, val content: String)
 
 @Serializable
-data class GetMemoriesRequest(val pageSize: Int, val pageToken: String?)
+data class GetMemoriesRequest(val email: String, val pageSize: Int, val pageToken: String?)
 
 @Serializable
 data class GetUserRequest(val email: String, val password: String)
