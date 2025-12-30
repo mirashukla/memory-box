@@ -1,0 +1,15 @@
+@TestApi_HostAddress = http://localhost:5089
+
+GET {{TestApi_HostAddress}}/health/
+Accept: application/json
+
+###
+
+
+POST {{TestApi_HostAddress}}/auth
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "password"
+}

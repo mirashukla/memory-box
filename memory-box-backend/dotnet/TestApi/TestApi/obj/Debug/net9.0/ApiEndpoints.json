@@ -1,0 +1,40 @@
+[
+  {
+    "ContainingType": "TestApi.Endpoints.AuthEndpoint\u002B\u003C\u003Ec",
+    "Method": "\u003CMapAuthEndpoint\u003Eb__0_0",
+    "RelativePath": "auth",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "TestApi.Endpoints.AuthRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "TestApi.Endpoint.HealthEndpoint\u002B\u003C\u003Ec__DisplayClass0_0",
+    "Method": "\u003CMapHealthEndpoint\u003Eb__0",
+    "RelativePath": "health",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  }
+]

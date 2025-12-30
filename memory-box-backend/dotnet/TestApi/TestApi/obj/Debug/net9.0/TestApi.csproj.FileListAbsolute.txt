@@ -1,0 +1,9 @@
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.csproj.AssemblyReference.cache
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\rpswa.dswa.cache.json
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.AssemblyInfoInputs.cache
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.AssemblyInfo.cs
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.csproj.CoreCompileInputs.cache
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.MvcApplicationPartsAssemblyInfo.cs
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.MvcApplicationPartsAssemblyInfo.cache
+C:\Repos\memory-box\memory-box-backend\dotnet\TestApi\TestApi\obj\Debug\net9.0\TestApi.sourcelink.json
