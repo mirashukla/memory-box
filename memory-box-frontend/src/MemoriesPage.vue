@@ -1,141 +1,178 @@
 <template>
-<div class="p-6 max-w-3xl mx-auto">
-<h1 class="text-2xl font-bold mb-4">Your Memories</h1>
+  <div class="landing-page p-6 max-w-5xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center">Your Memories</h1>
 
+    <!-- Sort button -->
+    <div class="flex justify-center mb-6">
+      <button @click="toggleSort" class="sort-btn">
+        Sort: {{ sortOrder === 'desc' ? 'Newest → Oldest' : 'Oldest → Newest' }}
+      </button>
+    </div>
 
-<div v-if="loading" class="text-gray-600">Loading memories...</div>
-<div v-else-if="error" class="text-red-600">{{ error }}</div>
+    <!-- Placeholder if no memories -->
+    <div v-if="memories.length === 0" class="placeholder">
+      <img :src="leoPhotoUrl" alt="No memories yet" />
+      <p class="text-gray-500">You haven't created any memories yet. Start adding some ✨</p>
+    </div>
 
+    <!-- Grid of memories with drag-and-drop -->
+    <draggable
+      v-else
+      v-model="memories"
+      item-key="title"
+      animation="200"
+      class="memories-grid"
+    >
+      <template #item="{ element, index }">
+        <div class="memory-card" @click="openMemory(index)">
+          <img :src="element.imageUrl" alt="Memory image" class="memory-image" />
+          <h2 class="memory-title">{{ element.title }}</h2>
+          <p class="memory-content">{{ element.content }}</p>
+          <p class="memory-date">Created at: {{ element.createdAt }}</p>
+        </div>
+      </template>
+    </draggable>
 
-<div v-else-if="memories.length === 0" class="placeholder">
-  <img src="@/images/leoPhoto.jpeg" alt="No memories yet" />
-  <p class="text-gray-500">You haven't created any memories yet. Start adding some ✨</p>
-</div>
-
-
-<div v-else>
-<div v-for="(memory, index) in memories" :key="index" class="memory-card">
-  <h2 class="memory-title">{{ memory.memory.title }}</h2>
-  <p class="memory-content">{{ memory.memory.content }}</p>
-  <p class="memory-date">Created at: {{ memory.createdAt }}</p>
-</div>
-
-
-
-<div v-if="nextPageToken" class="mt-4 flex justify-center">
-<button
-  @click="loadMemories(true)"
-  class="load-more-btn"
->
-  <span v-if="!loadingMore">Load more</span>
-  <span v-else>Loading...</span>
-</button>
-</div>
-</div>
-</div>
+    <!-- Overlay / Lightbox -->
+    <div v-if="activeIndex !== null" class="overlay" @click="closeMemory">
+      <div class="overlay-content" @click.stop>
+        <button class="nav-btn left" @click.stop="prevMemory">&#10094;</button>
+        <img :src="memories[activeIndex].imageUrl" alt="Memory image" class="overlay-image" />
+        <h2 class="overlay-title">{{ memories[activeIndex].title }}</h2>
+        <p class="overlay-content-text">{{ memories[activeIndex].content }}</p>
+        <button class="nav-btn right" @click.stop="nextMemory">&#10095;</button>
+        <button class="close-btn" @click="closeMemory">&times;</button>
+      </div>
+    </div>
+  </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import api from '@/api/client'
+import { ref } from 'vue'
+import draggable from 'vuedraggable'
 
-
-interface MemoryItem {
-title: string
-content: string
-}
-
+// Vite-compatible local images
+import placeholderImgUrl1 from '@/images/placeholder1.jpg?url'
+import placeholderImgUrl2 from '@/images/placeholder2.jpg?url'
+import placeholderImgUrl3 from '@/images/placeholder3.jpg?url'
+import leoPhotoUrl from '@/images/leoPhoto.jpeg?url'
 
 interface Memory {
-email: string
-createdAt: string
-memory: MemoryItem
+  title: string
+  content: string
+  createdAt: string
+  imageUrl: string
 }
 
+// Local memories array
+const memories = ref<Memory[]>([
+  {
+    title: 'Memory 1',
+    content: 'This is my first memory.',
+    createdAt: '2025-01-15T12:00:00Z',
+    imageUrl: placeholderImgUrl1
+  },
+  {
+    title: 'Memory 2',
+    content: 'Another lovely memory.',
+    createdAt: '2025-02-01T09:30:00Z',
+    imageUrl: placeholderImgUrl2
+  },
+  {
+    title: 'Memory 3',
+    content: 'Yet another memory!',
+    createdAt: '2025-03-10T18:45:00Z',
+    imageUrl: placeholderImgUrl3
+  }
+])
 
-interface PaginatedMemoriesResponse {
-memories: Memory[]
-nextPageToken?: string
-}
-
-
-const router = useRouter()
-const memories = ref<Memory[]>([])
-const loading = ref(true)
-const loadingMore = ref(false)
-const error = ref('')
-const pageSize = 10
-let nextPageToken: string | null = null
-
-
-async function loadMemories(isLoadMore = false) {
-  if (isLoadMore) loadingMore.value = true
-  else loading.value = true
-
-  try {
-    const response = await api.get<PaginatedMemoriesResponse>('/memories', {
-      params: {
-        pageSize,
-        pageToken: nextPageToken || undefined
-      },
-    })
-
-    if (isLoadMore) {
-      memories.value.push(...response.data.memories)
+// Sorting
+const sortOrder = ref<'asc' | 'desc'>('desc')
+function toggleSort() {
+  sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
+  memories.value.sort((a, b) => {
+    if (sortOrder.value === 'asc') {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     } else {
-      memories.value = response.data.memories
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     }
+  })
+}
 
-    nextPageToken = response.data.nextPageToken ?? null
-  } catch (err: any) {
-    console.error(err)
-    error.value = err.response?.data?.message || 'Failed to load memories.'
-  } finally {
-    loading.value = false
-    loadingMore.value = false
+// Lightbox overlay
+const activeIndex = ref<number | null>(null)
+function openMemory(index: number) {
+  activeIndex.value = index
+}
+function closeMemory() {
+  activeIndex.value = null
+}
+function prevMemory() {
+  if (activeIndex.value !== null) {
+    activeIndex.value =
+      (activeIndex.value - 1 + memories.value.length) % memories.value.length
   }
 }
-
+function nextMemory() {
+  if (activeIndex.value !== null) {
+    activeIndex.value = (activeIndex.value + 1) % memories.value.length
+  }
+}
 </script>
 
 <style scoped>
 .landing-page {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(135deg, #fde2e4, #e0f2fe);
   font-family: 'Inter', sans-serif;
   color: #1f2937;
+  background: linear-gradient(135deg, #fde2e4, #e0f2fe);
 }
 
-h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #111827;
-  text-align: center;
-  margin-bottom: 2rem;
+/* Sort button */
+.sort-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 9999px;
+  background-color: #ec4899;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.sort-btn:hover {
+  background-color: #db2777;
 }
 
+/* Grid layout */
 .memories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
 }
 
+/* Memory cards */
 .memory-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
+  position: relative;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
   border-radius: 24px;
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
+  cursor: grab;
 }
 
-.memory-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+.memory-card:active {
+  cursor: grabbing;
+}
+
+.memory-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 16px;
+  margin-bottom: 1rem;
 }
 
 .memory-title {
@@ -148,7 +185,7 @@ h1 {
 .memory-content {
   font-size: 1rem;
   color: #374151;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .memory-date {
@@ -156,23 +193,7 @@ h1 {
   color: #6b7280;
 }
 
-.load-more-btn {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background: #ec4899;
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s;
-  margin: 2rem auto 0;
-}
-
-.load-more-btn:hover {
-  background: #db2777;
-}
-
+/* Placeholder */
 .placeholder {
   text-align: center;
   margin-top: 4rem;
@@ -189,5 +210,83 @@ h1 {
 .placeholder p {
   font-size: 1rem;
   color: #6b7280;
+}
+
+/* Overlay / Lightbox */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.overlay-content {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  padding: 1rem;
+  text-align: center;
+}
+
+.overlay-image {
+  width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.overlay-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #be123c;
+}
+
+.overlay-content-text {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.close-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  font-size: 2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #374151;
+}
+
+/* Navigation arrows */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #374151;
+  padding: 0 0.5rem;
+}
+
+.nav-btn.left {
+  left: 0.5rem;
+}
+
+.nav-btn.right {
+  right: 0.5rem;
 }
 </style>

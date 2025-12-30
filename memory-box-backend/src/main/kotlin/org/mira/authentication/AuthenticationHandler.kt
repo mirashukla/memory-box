@@ -12,11 +12,11 @@ class AuthenticationHandler(val userRepository: UserRepository, val passwordServ
 
     companion object {
         fun mapToCreateUserRequest(requestBody: String): CreateUserRequest {
-            return Json.Default.decodeFromString<CreateUserRequest>(requestBody)
+            return Json.decodeFromString<CreateUserRequest>(requestBody)
         }
 
         fun mapToGetUserRequest(requestBody: String): GetUserRequest {
-            return Json.Default.decodeFromString<GetUserRequest>(requestBody)
+            return Json.decodeFromString<GetUserRequest>(requestBody)
         }
     }
 

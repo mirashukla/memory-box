@@ -34,6 +34,7 @@ function handleGetStarted() {
         <div class="hero-buttons">
           <router-link to="/sign-up" class="primary-btn">Get Started</router-link>
           <router-link to="/learn-more" class="secondary-btn">Learn More</router-link>
+          <router-link to="/memories" class="secondary-btn">Memories bypass</router-link>
         </div>
       </div>
 
