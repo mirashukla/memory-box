@@ -71,7 +71,6 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
     }
 
     private fun convertMemoryEntry(entry: Map<String, AttributeValue>) = Memory(
-        email = entry[EMAIL_ATTRIBUTE]?.s() ?: "",
         createdAt = entry[CREATED_AT_ATTRIBUTE]?.s() ?: "",
         memory = Json.decodeFromString<MemoryItem>(entry[MEMORY_ATTRIBUTE]?.s() ?: "")
     )

@@ -12,7 +12,7 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
 
     companion object {
         fun mapToCreateMemoryRequest(requestBody: String): CreateMemoryRequest {
-            return Json.Default.decodeFromString<CreateMemoryRequest>(requestBody)
+            return Json.decodeFromString<CreateMemoryRequest>(requestBody)
         }
 
         fun mapToGetMemoryRequest(request: APIGatewayV2HTTPEvent): GetMemoriesRequest {

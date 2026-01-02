@@ -4,10 +4,14 @@
 
     <!-- Sort button -->
     <div class="flex justify-center mb-6">
-      <button @click="toggleSort" class="sort-btn">
+      <button @click="toggleSort" class="btn-primary">
         Sort: {{ sortOrder === 'desc' ? 'Newest → Oldest' : 'Oldest → Newest' }}
       </button>
+      <button @click="openModal" class="btn-primary">Add Memory</button>
     </div>
+
+
+    <SaveMemoryForm v-if="showModal" @close="showModal = false" />
 
     <!-- Placeholder if no memories -->
     <div v-if="memories.length === 0" class="placeholder">
@@ -15,43 +19,66 @@
       <p class="text-gray-500">You haven't created any memories yet. Start adding some ✨</p>
     </div>
 
-    <!-- Grid of memories with drag-and-drop -->
-    <draggable
-      v-else
-      v-model="memories"
-      item-key="title"
-      animation="200"
-      class="memories-grid"
-    >
-      <template #item="{ element, index }">
-        <div class="memory-card" @click="openMemory(index)">
-          <img :src="element.imageUrl" alt="Memory image" class="memory-image" />
-          <h2 class="memory-title">{{ element.title }}</h2>
-          <p class="memory-content">{{ element.content }}</p>
-          <p class="memory-date">Created at: {{ element.createdAt }}</p>
-        </div>
-      </template>
-    </draggable>
+    <!-- Grid of memories -->
+    <div v-else class="memories-grid">
+      <div
+        v-for="(memory, index) in sortedMemories"
+        :key="memory.title + index"
+        class="memory-card"
+        @click="openMemory(index)"
+      >
+        <img :src="memory.imageUrl" :alt="`Memory: ${memory.title}`" class="memory-image" />
+        <h2 class="memory-title">{{ memory.title }}</h2>
+        <p class="memory-content">{{ memory.content }}</p>
+        <p class="memory-date">Created at: {{ formatDate(memory.createdAt) }}</p>
+      </div>
+    </div>
 
     <!-- Overlay / Lightbox -->
-    <div v-if="activeIndex !== null" class="overlay" @click="closeMemory">
+    <div v-if="activeMemory" class="overlay" @click="closeMemory">
       <div class="overlay-content" @click.stop>
-        <button class="nav-btn left" @click.stop="prevMemory">&#10094;</button>
-        <img :src="memories[activeIndex].imageUrl" alt="Memory image" class="overlay-image" />
-        <h2 class="overlay-title">{{ memories[activeIndex].title }}</h2>
-        <p class="overlay-content-text">{{ memories[activeIndex].content }}</p>
-        <button class="nav-btn right" @click.stop="nextMemory">&#10095;</button>
-        <button class="close-btn" @click="closeMemory">&times;</button>
+        <button
+          v-if="canNavigate"
+          class="nav-btn left"
+          @click.stop="prevMemory"
+          aria-label="Previous memory"
+        >
+          &#10094;
+        </button>
+
+        <img
+          :src="activeMemory.imageUrl"
+          :alt="`Memory: ${activeMemory.title}`"
+          class="overlay-image"
+        />
+        <h2 class="overlay-title">{{ activeMemory.title }}</h2>
+        <p class="overlay-content-text">{{ activeMemory.content }}</p>
+
+        <button
+          v-if="canNavigate"
+          class="nav-btn right"
+          @click.stop="nextMemory"
+          aria-label="Next memory"
+        >
+          &#10095;
+        </button>
+        <button class="close-btn" @click="closeMemory" aria-label="Close memory">&times;</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import draggable from 'vuedraggable'
+import { ref, computed } from 'vue'
+import SaveMemoryForm from "./components/SaveMemoryForm.vue"
 
-// Vite-compatible local images
+const showModal = ref(false)
+
+function openModal() {
+  showModal.value = true
+}
+
+// Local images
 import placeholderImgUrl1 from '@/images/placeholder1.jpg?url'
 import placeholderImgUrl2 from '@/images/placeholder2.jpg?url'
 import placeholderImgUrl3 from '@/images/placeholder3.jpg?url'
@@ -64,7 +91,7 @@ interface Memory {
   imageUrl: string
 }
 
-// Local memories array
+// Memories array
 const memories = ref<Memory[]>([
   {
     title: 'Memory 1',
@@ -86,18 +113,20 @@ const memories = ref<Memory[]>([
   }
 ])
 
-// Sorting
-const sortOrder = ref<'asc' | 'desc'>('desc')
+// Sorting state
+const sortOrder = ref<'asc' | 'desc'>('desc') // default newest → oldest
 function toggleSort() {
   sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
-  memories.value.sort((a, b) => {
-    if (sortOrder.value === 'asc') {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    } else {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    }
-  })
 }
+
+// Computed sorted memories
+const sortedMemories = computed(() =>
+  [...memories.value].sort((a, b) =>
+    sortOrder.value === 'asc'
+      ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+)
 
 // Lightbox overlay
 const activeIndex = ref<number | null>(null)
@@ -107,16 +136,35 @@ function openMemory(index: number) {
 function closeMemory() {
   activeIndex.value = null
 }
+
+// Active memory computed for TypeScript safety
+const activeMemory = computed(() => {
+  if (activeIndex.value === null) return null
+  return sortedMemories.value[activeIndex.value]
+})
+
+const canNavigate = computed(() => sortedMemories.value.length > 1)
+
 function prevMemory() {
   if (activeIndex.value !== null) {
     activeIndex.value =
-      (activeIndex.value - 1 + memories.value.length) % memories.value.length
+      (activeIndex.value - 1 + sortedMemories.value.length) % sortedMemories.value.length
   }
 }
+
 function nextMemory() {
   if (activeIndex.value !== null) {
-    activeIndex.value = (activeIndex.value + 1) % memories.value.length
+    activeIndex.value = (activeIndex.value + 1) % sortedMemories.value.length
   }
+}
+
+// Format dates nicely
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
 }
 </script>
 
@@ -160,11 +208,11 @@ function nextMemory() {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
-  cursor: grab;
+  cursor: pointer;
 }
-
-.memory-card:active {
-  cursor: grabbing;
+.memory-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
 .memory-image {
@@ -288,5 +336,9 @@ function nextMemory() {
 
 .nav-btn.right {
   right: 0.5rem;
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 </style>

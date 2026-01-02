@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket         = "mira-terraform-project-tf-state"
-    key            = "memory-box/backend/terraform.tfstate"
+    key            = "memory-box/frontend/terraform.tfstate"
     region         = "eu-west-1"
     dynamodb_table = "terraform-state-locking"
     encrypt        = true
