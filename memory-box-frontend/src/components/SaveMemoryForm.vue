@@ -27,14 +27,16 @@
   </div>
 </template>
 
-<script setup>
-import { ref, defineProps, defineEmits } from "vue"
+<script setup lang="ts">
+import { ref } from "vue"
 
-// Pass the logged-in user's email as a prop
-const props = defineProps({
-  userEmail: { type: String, required: true }
-})
-const emit = defineEmits(["close"])
+const props = defineProps<{
+  userEmail: string
+}>()
+
+const emit = defineEmits<{
+  (e: "close"): void
+}>()
 
 const title = ref("")
 const content = ref("")
@@ -46,6 +48,11 @@ function close() {
 }
 
 async function saveMemory() {
+  if (!title.value.trim() || !content.value.trim()) {
+    message.value = "Please fill in title & content"
+    return
+  }
+
   saving.value = true
   message.value = ""
 
@@ -54,7 +61,7 @@ async function saveMemory() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        email: props.userEmail, // use the logged-in user's email
+        email: props.userEmail,
         memoryItem: { title: title.value, content: content.value }
       })
     })
@@ -67,6 +74,9 @@ async function saveMemory() {
     message.value = "Memory saved 🎉"
     title.value = ""
     content.value = ""
+
+    // optionally close modal after success
+    // emit("close")
   } catch (err) {
     console.error(err)
     message.value = "Error saving memory 😢"
@@ -79,10 +89,7 @@ async function saveMemory() {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
@@ -93,13 +100,14 @@ async function saveMemory() {
 .modal-content {
   background: white;
   padding: 24px;
-  border-radius: 8px;
-  width: 400px;
+  border-radius: 16px;
+  width: 420px;
   max-width: 90%;
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
 
 .close-btn {
@@ -108,7 +116,7 @@ async function saveMemory() {
   right: 12px;
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
 }
 </style>

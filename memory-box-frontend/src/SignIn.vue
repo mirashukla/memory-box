@@ -53,7 +53,8 @@ const handleSignIn = async () => {
       email: email.value,
       password: password.value
     })
-      router.push('/memories') // redirect after login
+    localStorage.setItem("userEmail", email.value)
+    router.push('/memories')
   } catch (err: any) {
     console.log("POST /auth/login failed")
     console.error(err)

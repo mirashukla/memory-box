@@ -11,7 +11,7 @@
     </div>
 
 
-    <SaveMemoryForm v-if="showModal" @close="showModal = false" />
+ <SaveMemoryForm v-if="showModal" :userEmail="userEmail" @close="showModal = false"/>
 
     <!-- Placeholder if no memories -->
     <div v-if="memories.length === 0" class="placeholder">
@@ -73,6 +73,7 @@ import { ref, computed } from 'vue'
 import SaveMemoryForm from "./components/SaveMemoryForm.vue"
 
 const showModal = ref(false)
+const userEmail = ref(localStorage.getItem("userEmail") || "")
 
 function openModal() {
   showModal.value = true
