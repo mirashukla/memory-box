@@ -6,7 +6,7 @@ sealed class Authentication {
     object Unknown : Authentication()
 
     companion object {
-        fun fromMethod(method: String) =
+        fun fromMethod(method: String?) =
             when (method) {
                 "GET" -> Get
                 "POST" -> Post

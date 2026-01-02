@@ -5,7 +5,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayV2HTTPResponse
 import kotlinx.serialization.json.Json
 import org.mira.dynamodb.MemoryBoxTable
 import org.mira.lambda.CreateMemoryRequest
-import org.mira.lambda.GetMemoriesRequest
+import org.mira.lambda.GetAllMemoriesRequest
 import org.mira.lambda.ResponseHelper
 
 class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
@@ -15,7 +15,7 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
             return Json.decodeFromString<CreateMemoryRequest>(requestBody)
         }
 
-        fun mapToGetMemoryRequest(request: APIGatewayV2HTTPEvent): GetMemoriesRequest {
+        fun mapToGetMemoryRequest(request: APIGatewayV2HTTPEvent): GetAllMemoriesRequest {
 
             fun getPageSize(pageSize: Int?): Int {
                 return if (pageSize == null || pageSize < 1) {
@@ -28,7 +28,7 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
             val queryStringParameters = request.queryStringParameters
             val pageSize = queryStringParameters["pageSize"]?.toIntOrNull()
             val pageToken = queryStringParameters["pageToken"]
-            return GetMemoriesRequest("mira_shukla@outlook.com", getPageSize(pageSize), pageToken)
+            return GetAllMemoriesRequest(getPageSize(pageSize), pageToken)
         }
     }
 
@@ -39,15 +39,14 @@ class MemoriesHandler(val memoryBoxTable: MemoryBoxTable) {
         return ResponseHelper.response(200, """{"message":"Memory added!"}""")
     }
 
-    fun handleGetMemoriesPaginated(
-        request: GetMemoriesRequest
+    fun handleGetAllMemoriesPaginated(
+        request: GetAllMemoriesRequest
     ): APIGatewayV2HTTPResponse {
-        val result = memoryBoxTable.getLatestMemories(
-            email = request.email,
+        val result = memoryBoxTable.getAllLatestMemories(
             pageSize = request.pageSize,
             pageToken = request.pageToken
         )
-        return ResponseHelper.response(200, Json.Default.encodeToString(result))
+        return ResponseHelper.response(200, Json.encodeToString(result))
     }
 
 

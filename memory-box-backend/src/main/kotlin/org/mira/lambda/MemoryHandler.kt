@@ -37,8 +37,8 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         context: Context
     ): APIGatewayV2HTTPResponse {
 
-        val method = request.requestContext?.http?.method
-        val path = request.requestContext?.http?.path
+        val method = request.method()
+        val path = request.path()
 
         context.logger.log("Received request: $method $path.\n")
 
@@ -63,7 +63,7 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
 
         return when (action) {
             is Memories.Post -> memoriesHandler.handlePostMemory(mapToCreateMemoryRequest(request.body))
-            is Memories.Get -> memoriesHandler.handleGetMemoriesPaginated(mapToGetMemoryRequest(request))
+            is Memories.Get -> memoriesHandler.handleGetAllMemoriesPaginated(mapToGetMemoryRequest(request))
             is Memories.Unknown -> response(405, """{"error":"Method not allowed"}""")
         }
     }
@@ -73,7 +73,7 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         context: Context
     ): APIGatewayV2HTTPResponse {
 
-        val method = request.requestContext.http.method
+        val method = request.method()
 
         return if (method == "POST")
             authenticationHandler.handleRegister(
@@ -88,12 +88,15 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         context: Context
     ): APIGatewayV2HTTPResponse {
 
-        val action = Authentication.fromMethod(request.requestContext.http.method)
+        val action = Authentication.fromMethod(request.method())
 
         return when (action) {
             is Authentication.Post -> authenticationHandler.handleSignIn(mapToGetUserRequest(request.body))
             else -> response(405, """{"error":"Method not allowed"}""")
         }
     }
+
+    private fun APIGatewayV2HTTPEvent.method(): String? = this.requestContext?.http?.method
+    private fun APIGatewayV2HTTPEvent.path(): String? = this.requestContext?.http?.path
 
 }

@@ -29,6 +29,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import api from '@/api/client'
 
 const props = defineProps<{
   userEmail: string
@@ -42,6 +43,7 @@ const title = ref("")
 const content = ref("")
 const saving = ref(false)
 const message = ref("")
+const email = ref("")
 
 function close() {
   emit("close")
@@ -57,19 +59,10 @@ async function saveMemory() {
   message.value = ""
 
   try {
-    const res = await fetch("https://your-api.example.com/memories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const res = await api.post ('/memories', {
         email: props.userEmail,
         memoryItem: { title: title.value, content: content.value }
-      })
     })
-
-    if (!res.ok) {
-      const errText = await res.text()
-      throw new Error(errText || "Save failed")
-    }
 
     message.value = "Memory saved 🎉"
     title.value = ""

@@ -42,11 +42,14 @@ resource "aws_iam_role_policy" "lambda_dynamodb" {
         Action = [
           "dynamodb:PutItem",
           "dynamodb:Query",
-          "dynamodb:GetItem"
+          "dynamodb:GetItem",
+          "dynamodb:Scan"
         ]
         Resource = [
           aws_dynamodb_table.memories.arn,
-          aws_dynamodb_table.users.arn
+          "${aws_dynamodb_table.memories.arn}/*",
+          aws_dynamodb_table.users.arn,
+          "${aws_dynamodb_table.users.arn}/*"
         ]
       }
     ]

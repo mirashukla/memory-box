@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
+import software.amazon.awssdk.services.dynamodb.model.ScanRequest
 import java.time.Instant
 
 class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
@@ -36,26 +37,21 @@ class MemoryBoxTable(private val dynamoDbClient: DynamoDbClient) {
         dynamoDbClient.putItem(request)
     }
 
-    fun getLatestMemories(email: String, pageSize: Int = 10, pageToken: String?): MemoriesResponse {
+    fun getAllLatestMemories(pageSize: Int = 10, pageToken: String?): MemoriesResponse {
 
         fun fetchPage(createdAtToken: CreatedAt?, pageSize: Int): List<Memory> {
-            val query = QueryRequest.builder()
+            val scanRequest = ScanRequest.builder()
                 .tableName(MEMORY_BOX_TABLE_NAME)
-                .scanIndexForward(false)
-                .keyConditionExpression("email = :email")
-                .expressionAttributeValues(
-                    mapOf(":email" to AttributeValue.builder().s(email).build())
-                )
                 .limit(pageSize)
 
             if (createdAtToken != null) {
-                query.keyConditionExpression("createdAt <= :start")
+                scanRequest.filterExpression("createdAt <= :start")
                     .expressionAttributeValues(
                         mapOf(":start" to AttributeValue.fromS(createdAtToken.time.toString()))
                     )
             }
 
-            return dynamoDbClient.query(query.build()).items().map { convertMemoryEntry(it) }
+            return dynamoDbClient.scan(scanRequest.build()).items().map { convertMemoryEntry(it) }
         }
 
         val page = paginate(
