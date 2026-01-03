@@ -123,6 +123,9 @@ function openModal() {
 // Placeholder images
 import placeholderImgUrl from "@/images/placeholder1.jpg?url"
 import leoPhotoUrl from "@/images/leoPhoto.jpeg?url"
+import { useAuthStore } from "./stores/authStore"
+
+const auth = useAuthStore()
 
 // Types
 interface MemoryItem {
@@ -157,7 +160,10 @@ async function fetchMemories(pageToken?: string) {
       params: {
         pageSize,
         pageToken
-      }
+      },
+      headers: {
+      Authorization: `Bearer ${auth.accessToken}`
+    }
     })
 
     // Axios-style response

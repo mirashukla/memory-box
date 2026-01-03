@@ -11,6 +11,7 @@ import org.mira.dynamodb.UserRepository
 import org.mira.authentication.AuthenticationHandler.Companion.mapToCreateUserRequest
 import org.mira.authentication.AuthenticationHandler.Companion.mapToGetUserRequest
 import org.mira.authentication.PasswordService
+import org.mira.authentication.TokenGenerator
 import org.mira.memories.MemoriesHandler.Companion.mapToCreateMemoryRequest
 import org.mira.memories.MemoriesHandler.Companion.mapToGetMemoryRequest
 import org.mira.lambda.ResponseHelper.response
@@ -18,6 +19,8 @@ import org.mira.memories.Memories
 import org.mira.memories.MemoriesHandler
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.ssm.SsmClient
+import software.amazon.awssdk.services.ssm.model.GetParameterRequest
 
 class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> {
 
@@ -26,11 +29,20 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         .region(Region.of(region))
         .build()
 
+    private val ssmClient by lazy {
+        SsmClient.builder()
+            .region(Region.of(region))
+            .build()
+    }
+
     private val memoryBoxTable by lazy { MemoryBoxTable(dynamoDbClient) }
     private val userRepository by lazy { UserRepository(dynamoDbClient) }
     private val memoriesHandler by lazy { MemoriesHandler(memoryBoxTable) }
     private val passwordService by lazy { PasswordService() }
-    private val authenticationHandler by lazy { AuthenticationHandler(userRepository, passwordService) }
+    private val tokenGenerator by lazy { TokenGenerator(secret) }
+    private val authenticationHandler by lazy { AuthenticationHandler(userRepository, passwordService, tokenGenerator) }
+    private val secretName = System.getenv("AUTH_SECRET_NAME")
+    private val secret by lazy { fetchSecret() }
 
     override fun handleRequest(
         request: APIGatewayV2HTTPEvent,
@@ -55,12 +67,21 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
         }
     }
 
+    private fun extractBearerToken(headers: Map<String, String>): String? {
+        val authHeader = headers["authorization"] ?: headers["Authorization"]
+        return authHeader?.takeIf { it.startsWith("Bearer ") }?.substringAfter("Bearer ")?.trim()
+    }
+
     fun handleMemories(
         request: APIGatewayV2HTTPEvent,
         context: Context
     ): APIGatewayV2HTTPResponse {
         val action = Memories.fromMethod(request.requestContext.http.method)
-
+        val bearerToken = extractBearerToken(request.headers)
+        if (!tokenGenerator.validate(bearerToken)) return response(
+            401,
+            """{"error":"Invalid or missing token"}"""
+        )
         return when (action) {
             is Memories.Post -> memoriesHandler.handlePostMemory(mapToCreateMemoryRequest(request.body))
             is Memories.Get -> memoriesHandler.handleGetAllMemoriesPaginated(mapToGetMemoryRequest(request))
@@ -98,5 +119,16 @@ class MemoryHandler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResp
 
     private fun APIGatewayV2HTTPEvent.method(): String? = this.requestContext?.http?.method
     private fun APIGatewayV2HTTPEvent.path(): String? = this.requestContext?.http?.path
+
+    private fun fetchSecret(): String {
+        val request = GetParameterRequest.builder()
+            .name(secretName)
+            .withDecryption(true)
+            .build()
+
+        val response = ssmClient.getParameter(request)
+
+        return response.parameter().value()
+    }
 
 }

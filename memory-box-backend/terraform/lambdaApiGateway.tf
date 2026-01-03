@@ -66,9 +66,9 @@ resource "aws_lambda_function" "memory_box" {
   timeout          = 30
   environment {
     variables = {
-      USERS_TABLE       = aws_dynamodb_table.users.name
-      MEMORY_BOX_TABLE  = aws_dynamodb_table.memories.name
-      AUTH_SECRET_PARAM = var.auth_secret_arn
+      USERS_TABLE      = aws_dynamodb_table.users.name
+      MEMORY_BOX_TABLE = aws_dynamodb_table.memories.name
+      AUTH_SECRET_NAME = var.auth_secret_name
     }
   }
 }

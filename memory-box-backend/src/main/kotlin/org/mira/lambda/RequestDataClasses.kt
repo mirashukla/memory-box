@@ -3,7 +3,7 @@ package org.mira.lambda
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreateMemoryRequest(val email: String, val memoryItem: MemoryItem)
+data class CreateMemoryRequest(val email: String, val memoryItem: MemoryItem, val accessToken: String)
 
 @Serializable
 data class MemoryItem(val title: String, val content: String)

@@ -8,7 +8,11 @@ import org.mira.lambda.CreateUserRequest
 import org.mira.lambda.GetUserRequest
 import org.mira.lambda.ResponseHelper
 
-class AuthenticationHandler(val userRepository: UserRepository, val passwordService: PasswordService) {
+class AuthenticationHandler(
+    val userRepository: UserRepository,
+    val passwordService: PasswordService,
+    val tokenGenerator: TokenGenerator
+) {
 
     companion object {
         fun mapToCreateUserRequest(requestBody: String): CreateUserRequest {
@@ -32,7 +36,7 @@ class AuthenticationHandler(val userRepository: UserRepository, val passwordServ
                 logger?.log("user added")
                 ResponseHelper.response(200, "Success user added")
             } else {
-                return ResponseHelper.response(
+                ResponseHelper.response(
                     403,
                     """{"error":"User already exists"}"""
                 )
@@ -55,8 +59,9 @@ class AuthenticationHandler(val userRepository: UserRepository, val passwordServ
             storedHashHex = userAuthInfo.hash,
             storedSaltBase64 = userAuthInfo.salt
         )
-        return if (successHash)
-            ResponseHelper.response(200, "Success")
-        else ResponseHelper.response(403, "Incorrect Password")
+        return if (successHash) {
+            val token = tokenGenerator.generateJwt(request.email)
+            ResponseHelper.response(200, token)
+        } else ResponseHelper.response(403, "Incorrect Password")
     }
 }

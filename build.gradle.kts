@@ -14,8 +14,9 @@ allprojects {
 
 val awsLambdaCoreVersion = "1.3.0"
 val awsLambdaEventsVersion = "3.16.1"
-val awsSdkVersion = "2.33.9"
+val awsSdkVersion = "2.41.0"
 val serializationVersion = "1.9.0"
+val javaJwtVersion = "4.5.0"
 
 // ───────────────────────────────────────────────────────────────
 // Backend module configuration
@@ -31,6 +32,8 @@ project(":memory-box-backend") {
         implementation("software.amazon.awssdk:dynamodb:$awsSdkVersion")
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
         implementation("com.amazonaws:aws-lambda-java-core:$awsLambdaCoreVersion")
+        implementation("com.auth0:java-jwt:$javaJwtVersion")
+        implementation("software.amazon.awssdk:ssm:$awsSdkVersion")
 
         testImplementation(kotlin("test"))
     }

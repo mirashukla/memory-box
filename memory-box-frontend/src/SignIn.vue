@@ -40,8 +40,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/client'
+import { useAuthStore } from './stores/authStore'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -51,9 +53,11 @@ const handleSignIn = async () => {
   try {
       const res = await api.post('/auth/login', {
       email: email.value,
-      password: password.value
+      password: password.value,
     })
     localStorage.setItem("userEmail", email.value)
+    const token : string = res.data
+    auth.setAccessToken(token)
     router.push('/memories')
   } catch (err: any) {
     console.log("POST /auth/login failed")
