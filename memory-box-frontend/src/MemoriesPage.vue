@@ -124,6 +124,7 @@ function openModal() {
 import placeholderImgUrl from "@/images/placeholder1.jpg?url"
 import leoPhotoUrl from "@/images/leoPhoto.jpeg?url"
 import { useAuthStore } from "./stores/authStore"
+import type { Axios, AxiosResponse } from "axios"
 
 const auth = useAuthStore()
 
@@ -160,10 +161,10 @@ async function fetchMemories(pageToken?: string) {
       params: {
         pageSize,
         pageToken
-      },
-      headers: {
-      Authorization: `Bearer ${auth.accessToken}`
-    }
+      }
+    //   headers: {
+    //   Authorization: `Bearer ${auth.accessToken}`
+    // }
     })
 
     // Axios-style response
